@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -105,4 +106,28 @@ sys_trace(void)
     }
     myproc()->mask = n;
     return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+    struct sysinfo info;
+    struct proc *p = myproc();
+    uint64 addr;
+
+    // TODO: why the first arg of the func argaddr should be 0?
+    // the first arg is the syscall number
+    // 0 indicates the the first register saving the first arg
+    if(argaddr(0, &addr) < 0)
+        return -1;
+
+    // get available mem
+    info.freemem = free_mem_size();
+    // get running processes
+    info.nproc = proc_num();
+    if(copyout(p->pagetable, addr, (char *)&info, sizeof(info)) < 0)
+        return -1;
+
+    return 0;
+
 }
