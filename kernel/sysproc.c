@@ -81,6 +81,49 @@ int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+
+  // 1st arg: virtual mem address
+  // 2nd arg: number of pages
+  // 3rd arg: user space addr (out addr)
+  uint64 va;
+  int page_nums;
+  uint64 out_addr;
+
+  if (argaddr(0, &va) < 0) {
+      return -1;
+  }
+  if (argint(1, &page_nums) < 0) {
+      return -1;
+  }
+  if (argaddr(2, &out_addr) < 0) {
+      return -1;
+  }
+
+  if (page_nums < 0 || page_nums > 64) {
+      return -1;
+  }
+
+  uint64 bitmask = 0;
+  pte_t *pte;
+  struct proc *p = myproc();
+  for (int i = 0; i < page_nums; i++) {
+      if (va >= MAXVA) {
+          return -1;
+      }
+      pte = walk(p->pagetable, va, 0);
+      if (!pte) {
+          return -1;
+      }
+      if (*pte & PTE_A) {
+          bitmask |= (1 << i);
+          *pte ^= PTE_A;
+      }
+      va += PGSIZE;
+  }
+
+  if (copyout(p->pagetable, out_addr, (char*)&bitmask, sizeof(bitmask)) < 0) {
+      return -1;
+  }
   return 0;
 }
 #endif
