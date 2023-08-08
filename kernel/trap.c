@@ -77,10 +77,42 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
-    yield();
+  // which_dev == 2 -> indicates the hardware interrupt
+  if(which_dev == 2){
+      // alarm is enabled
+      if (p->alarm_interval) {
+          // the interval time expired
+          if (--p->alarm_ticks_left <=0) {
+              if (!p->alarm_handler_lock) {
+                  // backup the current trapframe; TODO: kernel or user ?
+                  *p->alarm_backup = *p->trapframe;
+                  // call handler func
+                  p->trapframe->epc = (uint64)p->alarm_handler;
+                  // lock handler (reentrant lock)
+                  p->alarm_handler_lock = 1;
+              }
+          }
+      }
+      yield();
+  }
+
 
   usertrapret();
+}
+
+int sigalarm(int ticks, void (*handler)()) {
+    struct proc *p = myproc();
+    p->alarm_interval = ticks;
+    p->alarm_ticks_left = ticks;
+    p->alarm_handler = handler;
+    return 0;
+}
+
+int sigreturn() {
+    struct proc *p = myproc();
+    *p->trapframe = *p->alarm_backup;
+    p->alarm_handler_lock = 0;
+    return 0;
 }
 
 //
