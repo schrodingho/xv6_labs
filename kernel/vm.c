@@ -88,9 +88,10 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
     if(*pte & PTE_V) {
       pagetable = (pagetable_t)PTE2PA(*pte); // if valid, get the next level Page Table
     } else {
-      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0) // TODO: Question?
+      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0) // if the PTE is invalid and the alloc is
         return 0;
-      memset(pagetable, 0, PGSIZE);
+      //  initialize the memory
+      memset(pagetable, 0, PGSIZE); // alloc != 0, create any required page-table pages;
       *pte = PA2PTE(pagetable) | PTE_V;
     }
   }

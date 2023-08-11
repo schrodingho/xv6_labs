@@ -3,10 +3,10 @@
 void*
 memset(void *dst, int c, uint n)
 {
-  char *cdst = (char *) dst;
+  char *cdst = (char *) dst; // cast 强制类型转换
   int i;
   for(i = 0; i < n; i++){
-    cdst[i] = c;
+    cdst[i] = c; // cdst set as c
   }
   return dst;
 }
